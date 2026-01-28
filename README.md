@@ -10,44 +10,43 @@
 - `Slice` and `StrSlice` are value types, not structs
 - Low-level functions like [memchr](src/utils/memchr.sol), [memcmp, memmove etc](src/utils/mem.sol)
 
-# Solidity String Limitations
+## Solidity String Limitations
 
-Solidity does not provide native string manipulation functions like substring, slice, indexOf, or split. There is no built-in way to slice strings directly (e.g. str.substring(1, 5) is not supported).
+Solidity does **not** provide native string manipulation functions such as
+`substring`, `slice`, `indexOf`, or `split`. There is no built-in way to slice
+strings directly (for example, `str.substring(1, 5)` is not supported).
 
-Available Approaches
+### Available Approaches
 
-Work with bytes
-Strings are UTF-8, but bytes are indexable, allowing manual byte-level slicing.
-⚠️ This operates on bytes, not Unicode characters, and may break on multi-byte UTF-8 characters.
+- **Work with `bytes`**  
+  Strings are UTF-8, but `bytes` are indexable, which allows manual byte-level
+  slicing.  
+  ⚠️ This operates on bytes, **not Unicode characters**, and may break on
+  multi-byte UTF-8 characters.
 
-Use solidity-stringutils (Arachnid)
-This library exists specifically to fill the gap, providing slicing, substring search, and comparisons via a slice abstraction.
-This is the closest thing to real substring support in Solidity.
+- **Use `solidity-stringutils` (Arachnid)**  
+  This library exists to fill the gap, providing slicing, substring search,
+  and comparison utilities via a `slice` abstraction.  
+  This is the closest thing to real substring support in Solidity.
 
-Concatenation only (built-in)
-Solidity 0.8.12+ supports string.concat(...), but still no slicing or parsing.
+- **Concatenation only (built-in)**  
+  Solidity `0.8.12+` supports `string.concat(...)`, but still offers **no**
+  slicing or parsing functionality.
 
-Design & Gas Considerations
+### Design & Gas Considerations
 
-String manipulation is gas-expensive and error-prone
+- String manipulation is **gas-expensive**
+- UTF-8 handling is error-prone on-chain
+- Best practice is to **avoid string parsing on-chain**
+- Prefer `bytes32`, enums, IDs, or hashes
+- Perform complex string operations **off-chain** when possible
 
-UTF-8 handling is tricky on-chain
+### TL;DR
 
-Best practice is to avoid string parsing on-chain
-
-Prefer bytes32, enums, IDs, or hashes
-
-Perform complex string operations off-chain when possible
-
-TL;DR
-
-❌ No native substring support in Solidity
-
-✅ Possible via bytes or libraries
-
-⚠️ Byte-based, not Unicode-safe
-
-🧠 Often better to redesign than parse strings on-chain
+- ❌ No native substring support in Solidity  
+- ✅ Possible via `bytes` or libraries  
+- ⚠️ Byte-based, not Unicode-safe  
+- 🧠 Often better to redesign than parse strings on-chain
 
 ## Install
 
