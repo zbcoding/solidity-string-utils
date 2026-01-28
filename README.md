@@ -1,4 +1,4 @@
-# StrSlice & Slice library for Solidity
+# String library for Solidity
 
 - Types: [StrSlice](src/StrSlice.sol) for strings, [Slice](src/Slice.sol) for bytes, [StrChar](src/StrChar.sol) for characters
 - [Gas efficient](https://github.com/dk1a/solidity-stringutils-gas)
@@ -9,6 +9,45 @@
 - Optional [PRBTest](https://github.com/paulrberg/prb-test) extension with assertions like `assertContains` and `assertLt` for both slices and native `bytes`, `string`
 - `Slice` and `StrSlice` are value types, not structs
 - Low-level functions like [memchr](src/utils/memchr.sol), [memcmp, memmove etc](src/utils/mem.sol)
+
+# Solidity String Limitations
+
+Solidity does not provide native string manipulation functions like substring, slice, indexOf, or split. There is no built-in way to slice strings directly (e.g. str.substring(1, 5) is not supported).
+
+Available Approaches
+
+Work with bytes
+Strings are UTF-8, but bytes are indexable, allowing manual byte-level slicing.
+⚠️ This operates on bytes, not Unicode characters, and may break on multi-byte UTF-8 characters.
+
+Use solidity-stringutils (Arachnid)
+This library exists specifically to fill the gap, providing slicing, substring search, and comparisons via a slice abstraction.
+This is the closest thing to real substring support in Solidity.
+
+Concatenation only (built-in)
+Solidity 0.8.12+ supports string.concat(...), but still no slicing or parsing.
+
+Design & Gas Considerations
+
+String manipulation is gas-expensive and error-prone
+
+UTF-8 handling is tricky on-chain
+
+Best practice is to avoid string parsing on-chain
+
+Prefer bytes32, enums, IDs, or hashes
+
+Perform complex string operations off-chain when possible
+
+TL;DR
+
+❌ No native substring support in Solidity
+
+✅ Possible via bytes or libraries
+
+⚠️ Byte-based, not Unicode-safe
+
+🧠 Often better to redesign than parse strings on-chain
 
 ## Install
 
