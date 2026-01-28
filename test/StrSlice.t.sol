@@ -6,10 +6,35 @@ import { PRBTest } from "@prb/test/src/PRBTest.sol";
 import { StrSliceAssertions } from "../src/test/StrSliceAssertions.sol";
 
 import { StrSlice, toSlice, StrSlice__InvalidCharBoundary } from "../src/StrSlice.sol";
+import { StrChar } from "../src/StrChar.sol";
 
 using { toSlice } for string;
 
+/// @dev Helper contract to test reverts via external calls
+/// Note: We pass raw string data instead of StrSlice because memory pointers
+/// don't survive external calls
+contract StrSliceRevertHelper {
+    using {toSlice} for string;
+
+    function callGet(string memory str, uint256 index) external pure returns (StrChar) {
+        return str.toSlice().get(index);
+    }
+
+    function callSplitAt(string memory str, uint256 mid) external pure returns (StrSlice, StrSlice) {
+        return str.toSlice().splitAt(mid);
+    }
+
+    function callGetSubslice(string memory str, uint256 start, uint256 end) external pure returns (StrSlice) {
+        return str.toSlice().getSubslice(start, end);
+    }
+}
+
 contract StrSliceTest is PRBTest, StrSliceAssertions {
+    StrSliceRevertHelper helper;
+
+    function setUp() public {
+        helper = new StrSliceRevertHelper();
+    }
     function testToString() public {
         string memory _s = unicode"Hello, world!";
         assertEq(_s, _s.toSlice().toString());
@@ -67,9 +92,8 @@ contract StrSliceTest is PRBTest, StrSliceAssertions {
     }
 
     function testGet__InvalidCharBoundary() public {
-        string memory _s = unicode"こんにちは";
         vm.expectRevert(StrSlice__InvalidCharBoundary.selector);
-        _s.toSlice().get(1);
+        helper.callGet(unicode"こんにちは", 1);
     }
 
     function testSplitAt() public {
@@ -80,9 +104,8 @@ contract StrSliceTest is PRBTest, StrSliceAssertions {
     }
 
     function testSplitAt__InvalidCharBoundary() public {
-        string memory _s = unicode"こんにちは";
         vm.expectRevert(StrSlice__InvalidCharBoundary.selector);
-        _s.toSlice().splitAt(1);
+        helper.callSplitAt(unicode"こんにちは", 1);
     }
 
     function testGetSubslice() public {
@@ -91,9 +114,8 @@ contract StrSliceTest is PRBTest, StrSliceAssertions {
     }
 
     function testGetSubslice__InvalidCharBoundary() public {
-        string memory _s = unicode"こんにちは";
         vm.expectRevert(StrSlice__InvalidCharBoundary.selector);
-        _s.toSlice().getSubslice(3, 8);
+        helper.callGetSubslice(unicode"こんにちは", 3, 8);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

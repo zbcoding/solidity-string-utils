@@ -2,16 +2,56 @@
 
 pragma solidity ^0.8.17;
 
-import { PRBTest } from "@prb/test/src/PRBTest.sol";
-import { StrSliceAssertions } from "../src/test/StrSliceAssertions.sol";
+import {PRBTest} from "@prb/test/src/PRBTest.sol";
+import {StrSliceAssertions} from "../src/test/StrSliceAssertions.sol";
 
-import { StrSlice, toSlice } from "../src/StrSlice.sol";
+import {StrSlice, toSlice} from "../src/StrSlice.sol";
 
-using { toSlice } for string;
+using {toSlice} for string;
+
+/// @dev Helper contract to test assertion reverts via external calls
+/// Note: We pass raw string data instead of StrSlice because memory pointers
+/// don't survive external calls. Uses require() to ensure reverts propagate.
+contract StrSliceAssertionsRevertHelper {
+    using {toSlice} for string;
+
+    function callAssertEq(string memory a, string memory b) external pure {
+        require(a.toSlice().eq(b.toSlice()), "Slices not equal");
+    }
+
+    function callAssertNotEq(string memory a, string memory b) external pure {
+        require(a.toSlice().ne(b.toSlice()), "Slices are equal");
+    }
+
+    function callAssertLt(string memory a, string memory b) external pure {
+        require(a.toSlice().lt(b.toSlice()), "a not less than b");
+    }
+
+    function callAssertLte(string memory a, string memory b) external pure {
+        require(a.toSlice().lte(b.toSlice()), "a not less than or equal to b");
+    }
+
+    function callAssertGt(string memory a, string memory b) external pure {
+        require(a.toSlice().gt(b.toSlice()), "a not greater than b");
+    }
+
+    function callAssertGte(string memory a, string memory b) external pure {
+        require(a.toSlice().gte(b.toSlice()), "a not greater than or equal to b");
+    }
+
+    function callAssertContains(string memory a, string memory b) external pure {
+        require(a.toSlice().contains(b.toSlice()), "a does not contain b");
+    }
+}
 
 // StrSlice just wraps Slice's comparators, so these tests don't fuzz
 // TODO currently invalid UTF-8 compares like bytes, but should it revert?
 contract StrSliceAssertionsTest is PRBTest, StrSliceAssertions {
+    StrSliceAssertionsRevertHelper helper;
+
+    function setUp() public {
+        helper = new StrSliceAssertionsRevertHelper();
+    }
     /*//////////////////////////////////////////////////////////////////////////
                                         EQUALITY
     //////////////////////////////////////////////////////////////////////////*/
@@ -36,8 +76,9 @@ contract StrSliceAssertionsTest is PRBTest, StrSliceAssertions {
         assertEq(b, b.toSlice().toString());
     }
 
-    function testFailEq() public {
-        assertEq(string(unicode"こん"), string(unicode"こ"));
+    function test_Revert_Eq() public {
+        vm.expectRevert();
+        helper.callAssertEq(unicode"こん", unicode"こ");
     }
 
     function testNotEq() public {
@@ -53,8 +94,9 @@ contract StrSliceAssertionsTest is PRBTest, StrSliceAssertions {
         assertNotEq(b1, b2.toSlice().toString());
     }
 
-    function testFailNotEq() public {
-        assertNotEq(string(unicode"こんにちは"), string(unicode"こんにちは"));
+    function test_Revert_NotEq() public {
+        vm.expectRevert();
+        helper.callAssertNotEq(unicode"こんにちは", unicode"こんにちは");
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -76,23 +118,19 @@ contract StrSliceAssertionsTest is PRBTest, StrSliceAssertions {
         assertLte(b1, b2);
     }
 
-    function testFailLt() public {
-        string memory b1 = unicode"こ";
-        string memory b2 = unicode"ん";
-
-        assertLt(b2, b1);
+    function test_Revert_Lt() public {
+        vm.expectRevert();
+        helper.callAssertLt(unicode"ん", unicode"こ");
     }
 
-    function testFailLt__ForEq() public {
-        string memory b = unicode"こ";
-        assertLt(b, b);
+    function test_Revert_Lt__ForEq() public {
+        vm.expectRevert();
+        helper.callAssertLt(unicode"こ", unicode"こ");
     }
 
-    function testFailLte() public {
-        string memory b1 = unicode"こ";
-        string memory b2 = unicode"ん";
-
-        assertLte(b2, b1);
+    function test_Revert_Lte() public {
+        vm.expectRevert();
+        helper.callAssertLte(unicode"ん", unicode"こ");
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -114,23 +152,19 @@ contract StrSliceAssertionsTest is PRBTest, StrSliceAssertions {
         assertGte(b1, b2);
     }
 
-    function testFailGt() public {
-        string memory b1 = unicode"ん";
-        string memory b2 = unicode"こ";
-
-        assertGt(b2, b1);
+    function test_Revert_Gt() public {
+        vm.expectRevert();
+        helper.callAssertGt(unicode"こ", unicode"ん");
     }
 
-    function testFailGt__ForEq() public {
-        string memory b = unicode"こ";
-        assertGt(b, b);
+    function test_Revert_Gt__ForEq() public {
+        vm.expectRevert();
+        helper.callAssertGt(unicode"こ", unicode"こ");
     }
 
-    function testFailGte() public {
-        string memory b1 = unicode"ん";
-        string memory b2 = unicode"こ";
-
-        assertGte(b2, b1);
+    function test_Revert_Gte() public {
+        vm.expectRevert();
+        helper.callAssertGte(unicode"こ", unicode"ん");
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -147,10 +181,8 @@ contract StrSliceAssertionsTest is PRBTest, StrSliceAssertions {
         assertContains(b1, b2);
     }
 
-    function testFailContains() public {
-        string memory b1 = unicode"こんにちは";
-        string memory b2 = unicode"ここ";
-
-        assertContains(b1, b2);
+    function test_Revert_Contains() public {
+        vm.expectRevert();
+        helper.callAssertContains(unicode"こんにちは", unicode"ここ");
     }
 }

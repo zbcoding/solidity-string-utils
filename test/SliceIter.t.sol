@@ -10,7 +10,23 @@ import { SliceIter__StopIteration } from "../src/SliceIter.sol";
 
 using { toSlice } for bytes;
 
+/// @dev Helper contract to test reverts via external calls
+contract SliceIterRevertHelper {
+    function callNext(SliceIter memory iter) external pure returns (uint8) {
+        return iter.next();
+    }
+
+    function callNextBack(SliceIter memory iter) external pure returns (uint8) {
+        return iter.nextBack();
+    }
+}
+
 contract SliceIterTest is PRBTest {
+    SliceIterRevertHelper helper;
+
+    function setUp() public {
+        helper = new SliceIterRevertHelper();
+    }
     function testLen(bytes calldata _b) public {
         SliceIter memory iter = _b.toSlice().iter();
         assertEq(iter.len(), _b.length);
@@ -37,7 +53,7 @@ contract SliceIterTest is PRBTest {
         assertEq(iter.asSlice().toBytes(), bytes(""));
 
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.next();
+        helper.callNext(iter);
     }
 
     function testNext__StopIteration() public {
@@ -49,7 +65,7 @@ contract SliceIterTest is PRBTest {
         iter.next();
 
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.next();
+        helper.callNext(iter);
     }
 
     function testNext__Fuzz(bytes calldata _b) public {
@@ -63,7 +79,7 @@ contract SliceIterTest is PRBTest {
         }
 
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.next();
+        helper.callNext(iter);
     }
 
     function testNext__StopIteration__Fuzz(bytes calldata _b) public {
@@ -76,7 +92,7 @@ contract SliceIterTest is PRBTest {
         }
 
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.next();
+        helper.callNext(iter);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -95,7 +111,7 @@ contract SliceIterTest is PRBTest {
         assertEq(iter.asSlice().toBytes(), bytes(""));
 
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.nextBack();
+        helper.callNextBack(iter);
     }
 
     function testNextBack__StopIteration() public {
@@ -105,9 +121,9 @@ contract SliceIterTest is PRBTest {
         iter.nextBack();
         iter.nextBack();
         iter.nextBack();
-        
+
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.nextBack();
+        helper.callNextBack(iter);
     }
 
     function testNextBack__Fuzz(bytes calldata _b) public {
@@ -131,7 +147,7 @@ contract SliceIterTest is PRBTest {
         }
 
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.nextBack();
+        helper.callNextBack(iter);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -163,8 +179,8 @@ contract SliceIterTest is PRBTest {
         iter.next();
         iter.next();
         iter.nextBack();
-        
+
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.next();
+        helper.callNext(iter);
     }
 }

@@ -120,6 +120,29 @@ Internally `StrSlice` uses `Slice` and extends it with logic for multibyte UTF-8
 **dangerous**
 | `asSlice`        | get underlying Slice                             |
 | `ptr`            | get memory pointer                               |
+**case conversion**
+| `toUpperCaseEnglish` | get new string with A-Z                     |
+| `toLowerCaseEnglish` | get new string with a-z                     |
+| `capitalizeEnglish`  | get new string with first char capitalized   |
+| `equalsIgnoreCaseEnglish` | true if equal ignoring case              |
+| `isLowerCaseEnglish` | true if contains no uppercase A-Z             |
+| `isUpperCaseEnglish` | true if contains no lowercase a-z             |
+|                  | *non-ASCII chars are left unchanged*             |
+**trimming**
+| `trim`           | remove leading and trailing whitespace           |
+| `trimStart`      | remove leading whitespace                        |
+| `trimEnd`        | remove trailing whitespace                       |
+**parsing**
+| `toUint`         | parse ASCII numeric string to uint256            |
+| `toAddress`      | parse hex string to address                      |
+**formatting**
+| `repeat`         | repeat slice N times into a new string           |
+| `padLeft`        | pad left to totalLen with char                   |
+| `padRight`       | pad right to totalLen with char                  |
+| `toHexString`    | convert uint256 or bytes to "0x..." string       |
+**search & split**
+| `count`          | count non-overlapping matches                    |
+| `split`          | split into StrSlice[] array by delimiter         |
 
 Indexes are in **bytes**, not characters. Indexing methods revert if `isCharBoundary` is false.
 

@@ -5,12 +5,45 @@ pragma solidity ^0.8.17;
 import { PRBTest } from "@prb/test/src/PRBTest.sol";
 
 import { StrSlice, toSlice, StrCharsIter } from "../src/StrSlice.sol";
+import { StrChar } from "../src/StrChar.sol";
 import { SliceIter__StopIteration } from "../src/SliceIter.sol";
 import { StrChar__InvalidUTF8 } from "../src/StrChar.sol";
 
 using { toSlice } for string;
 
+/// @dev Helper contract to test reverts via external calls
+/// Note: We pass raw string data instead of StrCharsIter because memory pointers
+/// don't survive external calls
+contract StrCharsIterRevertHelper {
+    using {toSlice} for string;
+
+    function callCountOnString(string memory str) external pure returns (uint256) {
+        return str.toSlice().chars().count();
+    }
+
+    function callNextOnEmptyIter(string memory str, uint256 advanceCount) external pure returns (StrChar) {
+        StrCharsIter memory iter = str.toSlice().chars();
+        for (uint256 i = 0; i < advanceCount; i++) {
+            iter.next();
+        }
+        return iter.next();
+    }
+
+    function callNextBackOnEmptyIter(string memory str, uint256 advanceCount) external pure returns (StrChar) {
+        StrCharsIter memory iter = str.toSlice().chars();
+        for (uint256 i = 0; i < advanceCount; i++) {
+            iter.nextBack();
+        }
+        return iter.nextBack();
+    }
+}
+
 contract StrCharsIterTest is PRBTest {
+    StrCharsIterRevertHelper helper;
+
+    function setUp() public {
+        helper = new StrCharsIterRevertHelper();
+    }
     function testCount() public {
         assertEq(toSlice("").chars().count(), 0);
         assertEq(toSlice("Hello, world!").chars().count(), 13);
@@ -54,7 +87,7 @@ contract StrCharsIterTest is PRBTest {
 
     function testCount__InvalidUTF8() public {
         vm.expectRevert(StrChar__InvalidUTF8.selector);
-        toSlice(string(bytes(hex"FFFF"))).chars().count();
+        helper.callCountOnString(string(bytes(hex"FFFF")));
     }
 
     function testNext() public {
@@ -72,13 +105,8 @@ contract StrCharsIterTest is PRBTest {
     }
 
     function testNext__StopIteration() public {
-        StrSlice s = string(unicode"💀!").toSlice();
-        StrCharsIter memory iter = s.chars();
-
-        iter.next();
-        iter.next();
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.next();
+        helper.callNextOnEmptyIter(unicode"💀!", 2);
     }
 
     function testNextBack() public {
@@ -96,13 +124,8 @@ contract StrCharsIterTest is PRBTest {
     }
 
     function testNextBack__StopIteration() public {
-        StrSlice s = string(unicode"💀!").toSlice();
-        StrCharsIter memory iter = s.chars();
-
-        iter.nextBack();
-        iter.nextBack();
         vm.expectRevert(SliceIter__StopIteration.selector);
-        iter.nextBack();
+        helper.callNextBackOnEmptyIter(unicode"💀!", 2);
     }
 
     function testUnsafeNext() public {

@@ -51,7 +51,19 @@ function removeFirstTwoChars(string memory str) pure returns (StrSlice) {
     return chars.asStr();
 }
 
+/// @dev Helper contract to test reverts via external calls
+contract ExamplesRevertHelper {
+    function callRemoveFirstTwoChars(string memory str) external pure returns (StrSlice) {
+        return removeFirstTwoChars(str);
+    }
+}
+
 contract ExamplesTest is PRBTest, StrSliceAssertions {
+    ExamplesRevertHelper examplesHelper;
+
+    function setUp() public {
+        examplesHelper = new ExamplesRevertHelper();
+    }
     function testExtractFromBrackets() public {
         assertEq(
             extractFromBrackets("((1 + 2) + 3) + 4"),
@@ -83,6 +95,6 @@ contract ExamplesTest is PRBTest, StrSliceAssertions {
 
     function testRemoveFirstTwoChars__InvalidUTF8() public {
         vm.expectRevert(StrChar__InvalidUTF8.selector);
-        removeFirstTwoChars(string(bytes(hex"FF")));
+        examplesHelper.callRemoveFirstTwoChars(string(bytes(hex"FF")));
     }
 }

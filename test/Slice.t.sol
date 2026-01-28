@@ -10,7 +10,37 @@ import { Slice__OutOfBounds } from "../src/Slice.sol";
 
 using { toSlice } for bytes;
 
+/// @dev Helper contract to test reverts via external calls
+contract SliceRevertHelper {
+    using { toSlice } for bytes;
+
+    function callGet(bytes memory b, uint256 index) external pure returns (uint8) {
+        return b.toSlice().get(index);
+    }
+
+    function callGetSubslice(bytes memory b, uint256 start, uint256 end) external pure returns (Slice) {
+        return b.toSlice().getSubslice(start, end);
+    }
+
+    function callGetBefore(bytes memory b, uint256 index) external pure returns (Slice) {
+        return b.toSlice().getBefore(index);
+    }
+
+    function callGetAfter(bytes memory b, uint256 index) external pure returns (Slice) {
+        return b.toSlice().getAfter(index);
+    }
+
+    function callGetAfterStrict(bytes memory b, uint256 index) external pure returns (Slice) {
+        return b.toSlice().getAfterStrict(index);
+    }
+}
+
 contract SliceTest is PRBTest, SliceAssertions {
+    SliceRevertHelper sliceHelper;
+
+    function setUp() public {
+        sliceHelper = new SliceRevertHelper();
+    }
     function checkOffset(bytes memory b1, bytes memory b2, uint256 offset) internal {
         require(b2.length <= b1.length, "checkOffset expects b2.length <= b1.length");
         for (uint256 i; i < b2.length; i++) {
@@ -275,9 +305,8 @@ contract SliceTest is PRBTest, SliceAssertions {
     }
 
     function testGet__RevertOutOfBounds(bytes calldata _b) public {
-        Slice slice = _b.toSlice();
         vm.expectRevert(Slice__OutOfBounds.selector);
-        slice.get(_b.length);
+        sliceHelper.callGet(_b, _b.length);
     }
 
     function testFirstLast(bytes calldata _b) public {
@@ -327,7 +356,7 @@ contract SliceTest is PRBTest, SliceAssertions {
         uint256 end = _b.length == 0 ? 0 : uint256(keccak256(abi.encode(_b, "end"))) % _b.length;
         vm.assume(start > end);
         vm.expectRevert(Slice__OutOfBounds.selector);
-        _b.toSlice().getSubslice(start, end);
+        sliceHelper.callGetSubslice(_b, start, end);
     }
 
     function testGetBefore(bytes calldata _b) public {
@@ -338,7 +367,7 @@ contract SliceTest is PRBTest, SliceAssertions {
     function testGetBefore_RevertOutOfBounds() public {
         bytes memory _b;
         vm.expectRevert(Slice__OutOfBounds.selector);
-        _b.toSlice().getBefore(1);
+        sliceHelper.callGetBefore(_b, 1);
     }
 
     function testGetAfter(bytes calldata _b) public {
@@ -349,7 +378,7 @@ contract SliceTest is PRBTest, SliceAssertions {
     function testGetAfter_RevertOutOfBounds() public {
         bytes memory _b;
         vm.expectRevert(Slice__OutOfBounds.selector);
-        _b.toSlice().getAfter(1);
+        sliceHelper.callGetAfter(_b, 1);
     }
 
     function testGetAfterStrict(bytes calldata _b) public {
@@ -361,7 +390,7 @@ contract SliceTest is PRBTest, SliceAssertions {
     function testGetAfterStrict_RevertOutOfBounds() public {
         bytes memory _b;
         vm.expectRevert(Slice__OutOfBounds.selector);
-        _b.toSlice().getAfterStrict(0);
+        sliceHelper.callGetAfterStrict(_b, 0);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
