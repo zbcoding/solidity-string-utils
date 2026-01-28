@@ -1,39 +1,6 @@
 {
-  "name": "@dk1a/solidity-stringutils",
-  "version": "0.3.3",
-  "author": "dk1a <dk1a@protonmail.com>",
-  "license": "MIT",
+  "name": "solidity-stringutils",
+  "version": "1.0.0",
   "description": "StrSlice & Slice library for Solidity",
-  "keywords": [
-    "solidity",
-    "library",
-    "string",
-    "slice",
-    "ethereum",
-    "smart-contracts"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/dk1a/solidity-stringutils.git"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "prepare": "husky install",
-    "test": "forge test",
-    "build": "forge build",
-    "version": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md"
-  },
-  "files": [
-    "/src"
-  ],
-  "devDependencies": {
-    "@commitlint/cli": "^17.4.2",
-    "@commitlint/config-conventional": "^17.4.2",
-    "@prb/test": "^0.2.1",
-    "conventional-changelog-cli": "^2.2.2",
-    "husky": "^8.0.3"
-  },
-  "dependencies": {}
+  "license": "MIT"
 }

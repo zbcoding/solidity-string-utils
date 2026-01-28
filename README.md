@@ -1,7 +1,7 @@
 # String library for Solidity (Work in progress)
 
 - Types: [StrSlice](src/StrSlice.sol) for strings, [Slice](src/Slice.sol) for bytes, [StrChar](src/StrChar.sol) for characters
-- [Gas efficient](https://github.com/dk1a/solidity-stringutils-gas)
+- Gas efficient (see [gas benchmarks](https://github.com/dk1a/solidity-stringutils-gas))
 - Versioned releases, available for both foundry and hardhat
 - Simple imports, you only need e.g. `StrSlice` and `toSlice`
 - `StrSlice` enforces UTF-8 character boundaries; `StrChar` validates character encoding
@@ -9,6 +9,126 @@
 - Optional [PRBTest](https://github.com/paulrberg/prb-test) extension with assertions like `assertContains` and `assertLt` for both slices and native `bytes`, `string`
 - `Slice` and `StrSlice` are value types, not structs
 - Low-level functions like [memchr](src/utils/memchr.sol), [memcmp, memmove etc](src/utils/mem.sol)
+
+
+## When to Use This Library
+
+### Why do Ethereum devs frown upon strings?
+Gas costs - Strings are expensive:
+Storage: Storing strings on-chain costs ~20,000 gas per 32-byte slot. A microblog-length string could cost $5-50+ depending on gas prices
+Operations: String comparison, concatenation, and manipulation require loops over bytes—each iteration costs gas
+Memory expansion: Longer strings expand memory, which has quadratic cost growth
+No native support: Solidity has no built-in string functions, so any operation requires library code (more bytecode = higher deployment cost)
+Determinism concerns - Strings introduce complexity:
+
+Variable length makes gas estimation unpredictable
+UTF-8 encoding edge cases can cause unexpected behavior
+Comparison/sorting depends on encoding, not semantic meaning
+**Best practice alternatives:**
+
+| Instead of... | Use... |
+|---------------|--------|
+| String identifiers | `bytes32` (fixed, cheap comparison) |
+| String enums | `uint8` enum types |
+| User-facing text | Events (logged off-chain, much cheaper) |
+| Configuration | Off-chain storage with on-chain hash verification |
+
+
+### Where String Utils Shines
+
+Despite gas concerns, there are excellent use cases for on-chain string manipulation:
+
+#### 1. View Functions & Off-Chain Reads (No Gas Cost)
+- Input validation in view functions
+- Formatting data for front-end consumption
+- ABI encoding helpers
+
+#### 2. L2 and Alternative Chains
+Gas on L2s (Arbitrum, Optimism, Base) is **10-100x cheaper** than mainnet. On app-specific chains, it's often negligible.
+
+#### 3. Testing & Development
+- Assertion helpers for test suites (included!)
+- Fuzzing utilities for string inputs
+- Console.log formatting in Foundry
+
+#### 4. High-Value String Operations
+Some operations justify the gas cost:
+- **EIP-712 signature formatting** — Structured data often requires string building
+- **NFT/Token URI construction** — Dynamic metadata URIs
+- **Rich revert messages** — Debugging with dynamic error content
+- **Merkle proof data** — String-based allowlists
+
+#### 5. Parsing User Input
+Convert strings to native types:
+- `toUint()` — Parse numeric strings
+- `toAddress()` — Parse hex addresses (with or without `0x` prefix)
+
+### The Future: Why Strings Could Matter More
+
+Future development could lower the gas cost of strings, making them more viable.
+
+| Trend | Impact |
+|-------|--------|
+| **L2 Scaling** | Already 100x cheaper, heading toward negligible |
+| **EIP-4844 (Blobs)** | Dramatically reduces data availability costs |
+| **Verkle Trees** | Will reduce state access costs |
+| **Account Abstraction** | Gas sponsorship means users don't feel costs |
+| **App-Specific Chains** | Gaming/social chains prioritize UX over minimal gas |
+
+**Emerging use cases:**
+- On-chain social profiles and content
+- Rich metadata stored directly in contracts
+- Human-readable governance proposals
+- On-chain search and indexing
+
+### Quick Decision Guide
+
+**Use this library when:**
+- You're on an L2 or low-cost chain
+- You're building view functions or off-chain tooling
+- You need URI construction, input parsing, or rich error messages
+- You're writing tests
+- You've planned for gas costs or are not worried about gas costs
+
+**Think twice when:**
+- You're on a circa 2025 EVM with cost-sensitive users
+- A `bytes32` or enum would suffice
+- The string could live off-chain with only a hash on-chain
+
+## Gas Optimization Notes
+
+[Solidity String Utils Gas Measurements](https://github.com/dk1a/solidity-stringutils-gas) note that the original Arachnid implementation was designed before Solidity 0.8.0, and doesn't use unchecked code blocks to significantly reduce gas costs.
+
+Standard forge gas snapshots don't capture string/bytes function efficiency well—they're not suited for internal functions with dynamic inputs where gas varies significantly (e.g., finding an item at index 0 vs index 500 in a 1000-byte string).
+
+See the [gas benchmarks repo](https://github.com/dk1a/solidity-stringutils-gas) for detailed measurements.
+
+### Performance Characteristics
+
+| Operation | Best For | Notes |
+|-----------|----------|-------|
+| `memchr`, `find` | Strings > ~8 bytes | Optimized for long strings; binary search tricks for 8-32 bytes |
+| `memcmp` (inequality) | Long strings | For 10,000+ bytes, approaches `keccak256` hash comparison speed |
+| `memmove` | Fast copying (view) | Uses identity precompile; very efficient but requires `view` |
+| `memcpy` | Pure copying | Chunked `mload`/`mstore`; slower but `pure` compatible |
+| `StrCharsIter.count` | Validated counting | Slower—must validate every UTF-8 character |
+| `StrCharsIter.unsafeCount` | Fast counting | Very fast—no validation (equivalent to Arachnid's `len`) |
+
+### Trade-offs in This Library
+
+**Optimized for longer strings:** Short strings (~8 bytes) have proportionally more overhead from safety checks like `len()` and `ptr()` (~50 gas each). This overhead is a deliberate trade-off for usability and readability.
+
+**Why some methods are `view`:** Methods using `memmove` (identity precompile) are `view` because the precompile isn't `pure`. The `pure` alternative `memcpy` is available but slower.
+
+**UTF-8 validation costs:** Safe iteration via `StrCharsIter` validates encoding. Use `unsafeCount` when you trust the input and need speed.
+
+### Direct Low-Level Access
+
+For maximum efficiency, use the low-level utilities directly:
+- [memchr](src/utils/memchr.sol) — byte search
+- [memcmp, memmove, memcpy](src/utils/mem.sol) — memory operations
+
+These have minimal overhead and are suitable for performance-critical code.
 
 ## Solidity String Limitations
 
@@ -51,7 +171,7 @@ strings directly (for example, `str.substring(1, 5)` is not supported).
 ## StrSlice
 
 ```solidity
-import { StrSlice, toSlice } from "@dk1a/solidity-stringutils/src/StrSlice.sol";
+import { StrSlice, toSlice } from "solidity-stringutils/src/StrSlice.sol";
 
 using { toSlice } for string;
 
@@ -221,7 +341,7 @@ Import `StrChar__` (static function lib) to use `StrChar__.fromCodePoint` for co
 ## Slice
 
 ```solidity
-import { Slice, toSlice } from "@dk1a/solidity-stringutils/src/Slice.sol";
+import { Slice, toSlice } from "solidity-stringutils/src/Slice.sol";
 
 using { toSlice } for bytes;
 
@@ -240,7 +360,7 @@ Internally Slice has very minimal assembly, instead using `memcpy`, `memchr`, `m
 
 ```solidity
 import { PRBTest } from "@prb/test/src/PRBTest.sol";
-import { Assertions } from "@dk1a/solidity-stringutils/src/test/Assertions.sol";
+import { Assertions } from "solidity-stringutils/src/test/Assertions.sol";
 
 contract StrSliceTest is PRBTest, Assertions {
     function testContains() public {
