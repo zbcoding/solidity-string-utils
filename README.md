@@ -1,4 +1,4 @@
-# String library for Solidity
+# String library for Solidity (Work in progress)
 
 - Types: [StrSlice](src/StrSlice.sol) for strings, [Slice](src/Slice.sol) for bytes, [StrChar](src/StrChar.sol) for characters
 - [Gas efficient](https://github.com/dk1a/solidity-stringutils-gas)
