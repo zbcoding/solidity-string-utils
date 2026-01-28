@@ -14,16 +14,17 @@
 ## When to Use This Library
 
 ### Why do Ethereum devs frown upon strings?
-Gas costs - Strings are expensive:
-Storage: Storing strings on-chain costs ~20,000 gas per 32-byte slot. A microblog-length string could cost $5-50+ depending on gas prices
-Operations: String comparison, concatenation, and manipulation require loops over bytes—each iteration costs gas
-Memory expansion: Longer strings expand memory, which has quadratic cost growth
-No native support: Solidity has no built-in string functions, so any operation requires library code (more bytecode = higher deployment cost)
-Determinism concerns - Strings introduce complexity:
+Gas costs - Strings are expensive.
 
-Variable length makes gas estimation unpredictable
-UTF-8 encoding edge cases can cause unexpected behavior
-Comparison/sorting depends on encoding, not semantic meaning
+- Storage: Storing strings on-chain costs ~20,000 gas per 32-byte slot. A microblog-length string could cost $5-50+ depending on gas prices
+- Operations: String comparison, concatenation, and manipulation require loops over bytes—each iteration costs gas
+- Memory expansion: Longer strings expand memory, which has quadratic cost growth
+- No native support: Solidity has no built-in string functions, so any operation requires library code (more bytecode = higher deployment cost)
+- Determinism concerns - Strings introduce complexity:
+  - Variable length makes gas estimation unpredictable
+  - UTF-8 encoding edge cases can cause unexpected behavior
+  - Comparison/sorting depends on encoding, not semantic meaning
+
 **Best practice alternatives:**
 
 | Instead of... | Use... |
@@ -97,7 +98,7 @@ Future development could lower the gas cost of strings, making them more viable.
 
 ## Gas Optimization Notes
 
-[Solidity String Utils Gas Measurements](https://github.com/dk1a/solidity-stringutils-gas) note that the original Arachnid implementation was designed before Solidity 0.8.0, and doesn't use unchecked code blocks to significantly reduce gas costs.
+[Solidity String Utils Gas Measurements](https://github.com/dk1a/solidity-stringutils-gas) note that the original [Arachnid implementation](https://github.com/Arachnid/solidity-stringutils)was designed before Solidity 0.8.0, and doesn't use code in unchecked blocks to significantly reduce gas costs.
 
 Standard forge gas snapshots don't capture string/bytes function efficiency well—they're not suited for internal functions with dynamic inputs where gas varies significantly (e.g., finding an item at index 0 vs index 500 in a 1000-byte string).
 
