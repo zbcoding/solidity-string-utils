@@ -24,16 +24,16 @@ strings directly (for example, `str.substring(1, 5)` is not supported).
   ⚠️ This operates on bytes, **not Unicode characters**, and may break on
   multi-byte UTF-8 characters.
 
-- **Use `solidity-stringutils` (Arachnid)**  
+- **Use a `solidity-stringutils` library **  
   This library exists to fill the gap, providing slicing, substring search,
   and comparison utilities via a `slice` abstraction.  
   This is the closest thing to real substring support in Solidity.
 
 - **Concatenation only (built-in)**  
   Solidity `0.8.12+` supports `string.concat(...)`, but still offers **no**
-  slicing or parsing functionality.
+  slicing or parsing functionality. Solidity has slowly been adding more string functions.
 
-### Design & Gas Considerations
+### ⚠️ Design & Gas Considerations
 
 - String manipulation is **gas-expensive**
 - UTF-8 handling is error-prone on-chain
@@ -41,24 +41,12 @@ strings directly (for example, `str.substring(1, 5)` is not supported).
 - Prefer `bytes32`, enums, IDs, or hashes
 - Perform complex string operations **off-chain** when possible
 
-### TL;DR
+### Key points:
 
 - ❌ No native substring support in Solidity  
 - ✅ Possible via `bytes` or libraries  
 - ⚠️ Byte-based, not Unicode-safe  
 - 🧠 Often better to redesign than parse strings on-chain
-
-## Install
-
-### Node
-```sh
-yarn add @dk1a/solidity-stringutils
-```
-
-### Forge
-```sh
-forge install --no-commit dk1a/solidity-stringutils
-```
 
 ## StrSlice
 
@@ -249,6 +237,7 @@ contract StrSliceTest is PRBTest, Assertions {
 You can completely ignore slices if all you want is e.g. `assertContains` for native `bytes`/`string`.
 
 ## Acknowledgements
+- [dk1a/solidity-stringutils](https://github.com/dk1a/solidity-stringutils) - This library is a fork of dk1a's string utils.
 - [Arachnid/solidity-stringutils](https://github.com/Arachnid/solidity-stringutils) - I basically wanted to make an updated version of solidity-stringutils
 - [rust](https://doc.rust-lang.org/core/index.html) - most similarities are in names and general structure; the implementation can't really be similar (solidity doesn't even have generics)
 - [paulrberg/prb-math](https://github.com/paulrberg/prb-math) - good template for solidity data structure libraries with `using {...} for ... global`
