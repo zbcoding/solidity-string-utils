@@ -13,7 +13,7 @@
 
 ## When to Use This Library
 
-### ⚠️ Why do Ethereum devs frown upon strings?
+### ⚠️ Why have Ethereum devs avoided strings?
 Gas costs - Strings are expensive.
 
 - Storage: Storing strings on-chain costs ~20,000 gas per 32-byte slot. A microblog-length string could cost $5-50+ depending on gas prices
